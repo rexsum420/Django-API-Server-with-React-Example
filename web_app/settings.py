@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'corsheaders',
-    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
 
 ]
 
@@ -56,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'users.middleware.UpdateLastActiveMiddleware',
+
 ]
 
 ROOT_URLCONF = 'web_app.urls'
@@ -146,16 +148,10 @@ TEMPLATES[0]['DIRS'] += [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',  # Optional, if needed
-        'rest_framework.authentication.BasicAuthentication',    # Optional, if needed
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 
+
 CORS_ALLOW_ALL_ORIGINS = True
  
-SIMPLE_JWT = {
-   "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-   "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
-   "ROUTES": ["api.routes"]
-}

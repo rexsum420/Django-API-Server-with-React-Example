@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
+    last_active = models.DateTimeField(auto_now=True)
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):

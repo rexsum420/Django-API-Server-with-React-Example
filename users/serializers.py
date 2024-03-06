@@ -22,14 +22,5 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['user', 'created']
+        fields = ['user', 'created', 'last_active']
 
-class ProfileListSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Profile
-        fields = ['user', 'created']
-
-    def get_user(self, obj):
-        return obj.user.username
