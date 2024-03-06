@@ -10,12 +10,10 @@ class UpdateLastActiveMiddleware:
 
     def __call__(self, request):
         if not isinstance(request.user, AnonymousUser):
-            # User is already authenticated
             profile = request.user.profile
             profile.last_active = timezone.now()
             profile.save()
         else:
-            # Attempt to authenticate user using token
             try:
                 auth = request.headers.get('Authorization')
                 if auth and auth.startswith('Token '):
@@ -29,7 +27,6 @@ class UpdateLastActiveMiddleware:
                 else:
                     raise AuthenticationFailed('Invalid token')
             except (Token.DoesNotExist, AuthenticationFailed):
-                # Token authentication failed, user remains unauthenticated
                 pass
 
         response = self.get_response(request)
