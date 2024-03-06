@@ -67,8 +67,7 @@ export default function SignUp() {
         const tokenData = await tokenResponse.json();
   
         // Store token in localStorage
-        localStorage.setItem('Token', tokenData.access);
-        localStorage.setItem('Refresh', tokenData.refresh);
+        localStorage.setItem('Token', tokenData.token);
 
   
         // Redirect user to '/'

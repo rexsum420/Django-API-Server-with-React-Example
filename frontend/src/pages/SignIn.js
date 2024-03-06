@@ -27,8 +27,7 @@ export default function SignIn() {
       }
 
       const tokenData = await tokenResponse.json();
-      localStorage.setItem('Token', tokenData.access);
-      localStorage.setItem('Refresh', tokenData.refresh);
+      localStorage.setItem('Token', tokenData.token);
       navigate('/');
       window.location.reload();
     } catch (error) {

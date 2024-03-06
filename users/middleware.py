@@ -1,18 +1,35 @@
 from django.utils import timezone
-from .models import Profile
+from django.contrib.auth.models import AnonymousUser
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
 class UpdateLastActiveMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user.is_authenticated:
+        if not isinstance(request.user, AnonymousUser):
+            # User is already authenticated
+            profile = request.user.profile
+            profile.last_active = timezone.now()
+            profile.save()
+        else:
+            # Attempt to authenticate user using token
             try:
-                profile = request.user.profile
-                profile.last_active = timezone.now()
-                profile.save()
-                print('Middleware Updated')
-            except Profile.DoesNotExist:
+                auth = request.headers.get('Authorization')
+                if auth and auth.startswith('Token '):
+                    key = auth.split(' ')[1]
+                    user, _ = TokenAuthentication().authenticate_credentials(key)  # Extract user from tuple
+                    request.user = user
+                    profile = request.user.profile
+                    profile.last_active = timezone.now()
+                    profile.save()
+
+                else:
+                    raise AuthenticationFailed('Invalid token')
+            except (Token.DoesNotExist, AuthenticationFailed):
+                # Token authentication failed, user remains unauthenticated
                 pass
 
         response = self.get_response(request)

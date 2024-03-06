@@ -15,35 +15,11 @@ export default function MenuBar() {
     
     const handleLogout = () => {
         localStorage.removeItem("Token");
-        localStorage.removeItem('Refresh');
         window.location.reload();
-    }
-
-    const refreshToken = async () => {
-        try {
-            const tokenResponse = await fetch('http://localhost:8000/users/token/refresh/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refresh: localStorage.getItem('Refresh') }), // Corrected the body JSON
-            });
-
-            if (!tokenResponse.ok) {
-                localStorage.removeItem('Token');
-                localStorage.removeItem('Refresh');
-            } else {
-                const newToken = await tokenResponse.json();
-                localStorage.setItem('Token', newToken.access);
-            }
-        } catch (error) {
-            console.error('Error refreshing token:', error);
-        }
     }
 
     useEffect(() => {
         const fetchData = async () => {
-            await refreshToken();
             const token = localStorage.getItem('Token');
             if (token) {
                 try {
