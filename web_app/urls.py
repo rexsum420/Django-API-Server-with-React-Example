@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('backend.urls'), name="root"),
     path('users/', include('users.urls'), name="user_dir"),
-    path('api', include('todo.urls'), name='todolists'),
+    path('api/', include('todo.urls'), name='todolist'),
 ]

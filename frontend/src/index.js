@@ -5,10 +5,15 @@ import reportWebVitals from './reportWebVitals';
 import '@material/web/button/filled-button.js';
 import '@material/web/button/outlined-button.js';
 import '@material/web/checkbox/checkbox.js';
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+				<DndProvider backend={HTML5Backend}>
+					<App />
+				</DndProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
