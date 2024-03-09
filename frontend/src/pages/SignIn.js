@@ -24,12 +24,14 @@ export default function SignIn() {
 
       if (!tokenResponse.ok) {
         
-      }
+      } else {
 
       const tokenData = await tokenResponse.json();
       localStorage.setItem('Token', tokenData.token);
+      localStorage.setItem('username', username);
       navigate('/');
       window.location.reload();
+      }
     } catch (error) {
       console.error('Error:', error.message);
     }

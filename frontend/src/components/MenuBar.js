@@ -14,6 +14,7 @@ export default function MenuBar() {
     };
     
     const handleLogout = () => {
+        localStorage.removeItem("username");
         localStorage.removeItem("Token");
         window.location.reload();
     }
