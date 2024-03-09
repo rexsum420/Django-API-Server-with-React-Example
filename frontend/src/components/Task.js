@@ -10,58 +10,57 @@ const style = {
   backgroundColor: "white",
   cursor: "move"
 };
-const Task = ({ id, text, index, moveCard }) => {
-    const ref = useRef(null);
-    const [, drop] = useDrop({
-      accept: ItemTypes.CARD,
-      hover(item, monitor) {
-        if (!ref.current) {
-          return;
-        }
-        const dragIndex = item.index;
-        const hoverIndex = index;
-        if (dragIndex === hoverIndex) {
-          return;
-        }
-        moveCard(dragIndex, hoverIndex);
-        item.index = hoverIndex;
-      }
-    });
-  
-    const [{ isDragging }, drag] = useDrag({
-      type: ItemTypes.CARD,
-      item: () => ({ id, index }),
-      collect: monitor => ({
-        isDragging: monitor.isDragging()
-      })
-    });
 
-    const handleDelete = () => {
-        // Remove the card from the list
-        moveCard(index, cards => cards.filter((_, i) => i !== index));
-        setCards(prevCards => {
-          return prevCards.map((card, i) => ({
-            ...card,
-            priority: i + 1 // Renumber priorities sequentially
-          }));
-        });
-      };
-      
-    const position = `Priority [${index + 1}]`;
-  
-    const opacity = isDragging ? 0 : 1;
-    drag(drop(ref));
-      
-  
-    return (
-      <CustomCard
-        ref={ref}
-        style={{ ...style, opacity }}
-        position={position}
-        text={text}
-        onDelete={handleDelete} // Pass the handleDelete function as onDelete prop
-      />
-    );
+const Task = ({ id, text, index, moveCard, onDelete}) => {
+  const ref = useRef(null);
+
+  // Setup the drop target for the card
+  const [, drop] = useDrop({
+    accept: ItemTypes.CARD,
+    hover(item, monitor) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+      moveCard(dragIndex, hoverIndex); // Call the moveCard function from props to update the card order
+      item.index = hoverIndex; // Update the index of the dragged item
+    }
+  });
+
+  // Setup the drag source for the card
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.CARD,
+    item: () => ({ id, index }), // Specify the id and index of the dragged item
+    collect: monitor => ({
+      isDragging: monitor.isDragging() // Check if the card is currently being dragged
+    })
+  });
+
+  // Attach the drag and drop functionality to the card element
+  drag(drop(ref));
+
+  // Function to handle card deletion
+  const handleDelete = () => {
+    onDelete(id);
   };
+
+  // Set the opacity of the card based on whether it's being dragged
+  const opacity = isDragging ? 0 : 1;
+
+  // Render the CustomCard component with the provided props
+  return (
+    <div ref={ref}>
+      <CustomCard
+        style={{ ...style, opacity }}
+        text={text}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
+};
 
 export default Task;

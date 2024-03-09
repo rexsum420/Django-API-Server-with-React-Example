@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Task from '../components/Task';
 import update from 'immutability-helper';
-import CustomCard from '../components/TaskBox';
-
-const style = {
-  width: '80%',
-  alignItems: 'center',
-};
 
 const Home = () => {
   const [cards, setCards] = useState([]);
@@ -39,17 +33,22 @@ const Home = () => {
   const moveCard = useCallback(
     (dragIndex, hoverIndex) => {
       const dragCard = cards[dragIndex];
-      setCards(
-        update(cards, {
-          $splice: [
-            [dragIndex, 1],
-            [hoverIndex, 0, dragCard],
-          ],
-        })
-      );
+      setCards(update(cards, {
+        $splice: [
+          [dragIndex, 1],
+          [hoverIndex, 0, dragCard]
+        ]
+      }));
     },
     [cards]
   );
+  
+  
+  const handleDelete = (id) => {
+    // Filter out the card with the given id
+    const updatedCards = cards.filter(card => card.id !== id);
+    setCards(updatedCards);
+  };
 
   const renderCard = (card, index) => {
     return (
@@ -57,8 +56,9 @@ const Home = () => {
         key={card.id}
         index={index}
         id={card.id}
-        text={card.task} // Use task from the fetched data
+        text={card.task}
         moveCard={moveCard}
+        onDelete={() => handleDelete(card.id)}
       />
     );
   };
@@ -71,80 +71,118 @@ const Home = () => {
     }
   };
 
-  const handleSave = async() => {
-      try {
-        const token = localStorage.getItem('Token');
-        
-        // Prepare data for API call
-        const requestData = cards.map(card => ({
-          id: card.id,
-          priority: card.priority,
-          task: card.task,
-          completed: card.completed || false, // If checkbox is unchecked, set completed to false
-        }));
-    
-        // Prepare requests for updating existing tasks
-        const updateRequests = requestData.map(item => {
-          return fetch(`http://localhost:8000/api/todolists/${item.id}/`, {
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('Token');
+  
+      // Fetch current tasks in the database
+      const response = await fetch('http://localhost:8000/api/todolists/', {
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch current tasks from the database');
+      }
+  
+      const currentTasks = await response.json();
+  
+      // Count the number of tasks in cards vs number of tasks in the database
+      const numTasksInCards = cards.length;
+      const numTasksInDatabase = currentTasks.length;
+  
+      // Prepare requests for updating existing tasks and adding new tasks
+      const requests = [];
+  
+      cards.forEach((card, index) => {
+        if (index < numTasksInDatabase) {
+          // Update existing task
+          const updateRequest = fetch(`http://localhost:8000/api/todolists/${currentTasks[index].id}/`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Token ${token}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ priority: item.priority, task: item.task, completed: item.completed }),
-          });
-        });
-    
-        // Prepare requests for adding new tasks
-        const newTasks = cards.filter(card => !card.id);
-        const createRequests = newTasks.map(item => {
-          return fetch('http://localhost:8000/api/todolists/', {
+            body: JSON.stringify({ 
+              priority: index + 1, 
+              task: card.task, 
+            }),          });
+          requests.push(updateRequest);
+        } else {
+          // Add new task
+          const createRequest = fetch('http://localhost:8000/api/todolists/', {
             method: 'POST',
             headers: {
               'Authorization': `Token ${token}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ task: item.task, completed: item.completed || false }), // Set completed to false for new tasks
+            body: JSON.stringify({ task: card.task }),
           });
-        });
-    
-        // Execute all requests concurrently
-        await Promise.all([...updateRequests, ...createRequests]);
-        
-        // Fetch updated data and update state if necessary
-        const updatedDataResponse = await fetch('http://localhost:8000/api/todolists/', {
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!updatedDataResponse.ok) {
-          throw new Error('Failed to fetch updated data');
+          requests.push(createRequest);
         }
-        const updatedData = await updatedDataResponse.json();
-        setCards(updatedData);
-      } catch (error) {
-        console.log(error);
+      });
+  
+      // Execute all requests concurrently
+      await Promise.all(requests);
+  
+      // If num of tasks in cards < num of tasks in database, delete remaining tasks in database
+      if (numTasksInCards < numTasksInDatabase) {
+        const deleteRequests = currentTasks
+          .slice(numTasksInCards) // Get the tasks in the database beyond the number of tasks in cards
+          .map(task => {
+            return fetch(`http://localhost:8000/api/todolists/${task.id}/`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+          });
+  
+        await Promise.all(deleteRequests);
       }
-    };
-    
-
+  
+      // Fetch updated data and update state if necessary
+      const updatedDataResponse = await fetch('http://localhost:8000/api/todolists/', {
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!updatedDataResponse.ok) {
+        throw new Error('Failed to fetch updated data');
+      }
+  
+      const updatedData = await updatedDataResponse.json();
+      setCards(updatedData);
+    } catch (error) {
+      console.error('Error saving tasks:', error);
+    }
+  };
+  
   return (
     <>
-      <div style={style}>
-        {cards.map((card, i) => renderCard(card, i))}
-        <div style={{ marginTop: '20px' }}>
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            placeholder="Enter new task..."
-          />
-          <button onClick={handleAddTask}>Add Task</button>
+      <div className='row'>
+        <div className='col-9' style={{ width: '75%' }}> {/* Adjusted width to take 75% */}
+          {cards.map((card, i) => renderCard(card, i))}
         </div>
-        <button onClick={handleSave}>
+        <div className='col-3' style={{ width: '25%' }}> {/* Adjusted width to take 25% */}
+          <div style={{ marginTop: '20px' }}>
+            <input
+              type="text"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder="Enter new task..."
+            />
+            <button onClick={handleAddTask}>Add Task</button>
+          </div>
+          <button onClick={handleSave} style={{ marginTop: '100px' }}>
             Save
-        </button>
+          </button>
+        </div>
       </div>
     </>
   );

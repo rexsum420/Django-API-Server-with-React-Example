@@ -3,11 +3,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import TodoList
 from .serializers import TodoListSerializer, CreateTodoSerializer
+from rest_framework.authentication import TokenAuthentication
 
 class TodoListViewSet(viewsets.ModelViewSet):
     queryset = TodoList.objects.all()
     serializer_class = TodoListSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = (TokenAuthentication,)
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)

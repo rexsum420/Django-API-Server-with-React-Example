@@ -92,6 +92,19 @@ function Settings() {
 
   };
 
+  // Format the date using toLocaleString() method
+  const formatDate = (date) => {
+    return new Date(date).toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric'
+    });
+  };
+
   return (
     <div>
       <h1>Settings</h1>
@@ -116,8 +129,8 @@ function Settings() {
             />
             {emailError && <span style={{ color: 'red' }}>{emailError}</span>} {/* Display email error */}
             </p>
-          <p>Profile Created: {profileData.created}</p>
-          <p>Last Active: {profileData.last_active}</p>
+          <p>Profile Created: {profileData.created && formatDate(profileData.created)}</p>
+          <p>Last Active: {profileData.last_active && formatDate(profileData.last_active)}</p>
           <button onClick={handleSaveChanges}>Save Changes</button>
           <button onClick={handleDeleteProfile}>Delete Profile</button>
         </div>
